@@ -5,14 +5,16 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
 
-    private float _speed = 9.0f;
-    private float _gravity = 30.0f;
+    private float _speed = 14.0f;
+    private float _gravity = 26.0f;
     private Vector3 _direction;
     private float _jumpHeight = 12.0f;
 
     private CharacterController _controller;
     private Animator _anim;
     private bool _jumping = false;
+    private bool _onLedge = false;
+    private Ledge _activeLedge;
 
     void Start()
     {
@@ -21,6 +23,19 @@ public class Player : MonoBehaviour
     }
 
     void Update()
+    {
+        CalculateMovement();
+
+        if (_onLedge)
+        {
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                _anim.SetTrigger("ClimbUp");
+            }
+        }
+    }
+
+    private void CalculateMovement()
     {
         if (_controller.isGrounded)
         {
@@ -51,6 +66,31 @@ public class Player : MonoBehaviour
 
         _direction.y -= _gravity * Time.deltaTime;
 
-        _controller.Move(_direction * Time.deltaTime);
+        if (_controller.enabled)
+        {
+            _controller.Move(_direction * Time.deltaTime);
+        }
+    }
+
+    public void GrabLedge(Vector3 handPos, Ledge currentLedge)
+    {
+        _controller.enabled = false;
+        _anim.SetBool("GrabLedge", true);
+        _anim.SetFloat("Speed", 0.0f);
+        _jumping = false;
+        _anim.SetBool("Jump", _jumping);
+        _onLedge = true;
+
+        transform.position = handPos;
+        _activeLedge = currentLedge;
+    }
+
+    public void ClimbUpComplete()
+    {
+        Debug.Log("ClimbUpComplete");
+        transform.position = _activeLedge.GetStandPos();
+        _anim.SetBool("GrabLedge", false);
+        //_onLedge = false;
+        _controller.enabled = true;
     }
 }
